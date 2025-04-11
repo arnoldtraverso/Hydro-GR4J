@@ -1,6 +1,6 @@
 # 🌊 Hydro-GR4J
 
-**hydro-GR4J** es una implementación en R del modelo hidrológico conceptual **GR4J (Génie Rural à 4 paramètres Journalier)**. Este repositorio está orientado a fines académicos y de investigación, permitiendo simular caudales diarios a partir de datos de precipitación y evapotranspiración.
+**hydro-GR4J** es una implementación en R del modelo hidrológico conceptual **GR4J (Génie Rural à 4 paramètres Journalier)**. Este repositorio está orientado a fines académicos y de investigación, permitiendo simular caudales diarios a partir de datos de precipitación y evapotranspiración, se orienta al modelado del balance hídrico diario en cuencas hidrográficas. El objetivo principal es proporcionar una herramienta sencilla, reproducible y flexible para la simulación de caudales a partir de series de precipitación y evapotranspiración.
 
 ## 📌 Objetivos
 
@@ -10,6 +10,8 @@
 - Servir como base para ejercicios de calibración y evaluación del modelo.
 
 ## 🔧 Estructura del modelo GR4J
+
+GR4J es un modelo conceptual de tipo lluvia-caudal desarrollado por el IRSTEA (Francia), ampliamente utilizado por su simplicidad y buen desempeño en diversas condiciones climáticas. Su estructura permite capturar los procesos esenciales del ciclo hidrológico con solo cuatro parámetros ajustables.
 
 El modelo GR4J se basa en una representación simplificada del ciclo hidrológico, con solo **cuatro parámetros**:
 
@@ -24,3 +26,7 @@ Su estructura incluye:
 
 ## 📁 Contenido del repositorio
 
+## 📚 Referencias
+
+Perrin, C., Michel, C., & Andréassian, V. (2003). Improvement of a parsimonious model for streamflow simulation. Journal of Hydrology, 279(1–4), 275–289.
+IRSTEA - GR4J Model Documentation
