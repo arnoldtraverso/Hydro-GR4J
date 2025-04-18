@@ -39,11 +39,52 @@ library(RSAGA)
 library(raster)
 ```
 
-# 2. Delim    itación hidrográfica
- Se debe cargar el modelo numérico de terreno (MNT) de la cuenca en análisis, en este paso se debe verificar el sistemas que coordenada que posee, es ideal que el NMT se encuentre en el sistema de coordenadas UTM.
- 
+# 2. Delimitación hidrográfica
+Se debe cargar el modelo numérico de terreno (MNT) de la cuenca en análisis, en este paso se debe verificar el sistemas que coordenada que posee, es ideal que el NMT se encuentre en el sistema de coordenadas UTM.
+
 ```{r}
-MNT <- raster::raster(x = "1_Data_MNT/")
+# Enlace donde se ingresa Saga
+Env = rsaga.env(path = "D:/")
+# Verificar version
+rsaga.get.version(env = envi)
 ```
- 
+
+```{r}
+# Cargamos el MNT de la cuenca a R
+MNT <- raster::raster(x = "1_Data_MNT/STRMv4_CANETE.tif")
+print(MNT)
+```
+
+```{r}
+MNT_utm <- projectRaster(MNT, crs = crs(""))
+writeRaster(MNT_utm, filename = "1_Data_MNT/MNT_UTM.tif", format = "GTiff" , overwrite = TRUE)
+projection(MNT_utm)
+spplot(MNT_utm)
+```
+
+```{r}
+#Crear archivo .sgrd
+rsaga.geoprocessor(lib = "io_gdal", 0,
+                   param = list(GRIDS ="MNT_utm_sgrd",
+                                FILES= "MNT_utm.tif",
+                                TRANSFORM= 1),env = envi)
+
+#Verificar que quedó creado
+MNT_utm_sgrd = raster("MNT_utm_sgrd.sdat")
+#Verificar la proyección
+projection(MNT_utm_sgrd)
+```
+
+```{r}
+rsaga.geoprocessor(lib = "ta_preprocessor", 2,
+                   param = list(DEM ="MNT_utm_sgrd.sgrd",
+                                DEM_PREPROC= "demsink_fill"),env = envi)
+```
+
+
+
+
+
+
+
 
