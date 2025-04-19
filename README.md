@@ -30,3 +30,8 @@ Su estructura incluye:
 
 Perrin, C., Michel, C., & Andréassian, V. (2003). Improvement of a parsimonious model for streamflow simulation. Journal of Hydrology, 279(1–4), 275–289.
 IRSTEA - GR4J Model Documentation
+
+## Licencia
+
+Este proyecto está licenciado bajo la [Licencia MIT](./LICENSE) - libre para uso académico y técnico, con reconocimiento al autor.
+
