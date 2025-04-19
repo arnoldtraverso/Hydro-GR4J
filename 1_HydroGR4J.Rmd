@@ -3,19 +3,7 @@ title: "Hydro-GR4J"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code.
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*.
-
-```{r}
-plot(cars)
-```
-
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
-
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
-
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. 
 
 # 1. Proceso preliminar
 
@@ -24,10 +12,17 @@ GR4J es un modelo conceptual de tipo lluvia-caudal desarrollado por el IRSTEA (F
 Instalar las librerias necesarias para el proceso de delimitación hidrográfica de la cuenca y el modelelamiento hidrológico en GR4J
 
 ```{r}
-install.packages("airGR")
-install.packages("tidyverse")
-install.packages("RSAGA")
-install.packages("raster")
+# install.packages("airGR")
+# install.packages("tidyverse")
+# install.packages("RSAGA")
+# install.packages("raster")
+# install.packages("rgdal")
+# install.packages("sf")
+# install.packages("ggspatial")
+# install.packages("SPEI")
+# install.packages("zoo")
+# install.packages("lubridate")
+
 ```
 
 Una vez se instalen las librerias necesarias deben cargarse
@@ -37,16 +32,22 @@ library(airGR)
 library(tidyverse)
 library(RSAGA)
 library(raster)
+library(rgdal)
+library(sf)
+library(ggspatial)
+library(readxl)
+library(SPEI)
+library(zoo)
+library(lubridate)
 ```
 
 # 2. Delimitación hidrográfica
-Se debe cargar el modelo numérico de terreno (MNT) de la cuenca en análisis, en este paso se debe verificar el sistemas que coordenada que posee, es ideal que el NMT se encuentre en el sistema de coordenadas UTM.
-
+Para el proceso de delimitación hidrográfica, se ha de emplear la herramienta SIG SAGA-GIS que se puede obtener directamente del siguiente enlace (https://sourceforge.net/projects/saga-gis/). Una vez se tenga el software, descomprimir y direccionar como se muestra a continuación
 ```{r}
 # Enlace donde se ingresa Saga
-Env = rsaga.env(path = "D:/")
+Env = rsaga.env(path = "C:/Users/Legion/Downloads/saga-9.8.0_x64/saga-9.8.0_x64")
 # Verificar version
-rsaga.get.version(env = envi)
+rsaga.get.version(env = Env)
 ```
 
 ```{r}
@@ -54,37 +55,200 @@ rsaga.get.version(env = envi)
 MNT <- raster::raster(x = "1_Data_MNT/STRMv4_CANETE.tif")
 print(MNT)
 ```
-
+Se debe cargar el modelo numérico de terreno (MNT) de la cuenca en análisis, en este paso se debe verificar el sistemas que coordenada que posee, es ideal que el NMT se encuentre en el sistema de coordenadas UTM.
 ```{r}
-MNT_utm <- projectRaster(MNT, crs = crs(""))
-writeRaster(MNT_utm, filename = "1_Data_MNT/MNT_UTM.tif", format = "GTiff" , overwrite = TRUE)
+# Cargamos el MNT de la cuenca a R
+MNT <- raster::raster(x = "1_Data_MNT/STRMv4_CANETE.tif")
+print(MNT)
+```
+```{r}
+MNT_utm <- projectRaster(MNT, crs = crs("+proj=utm +zone=18 +south +datum=WGS84 +units=m +no_defs"))
 projection(MNT_utm)
 spplot(MNT_utm)
 ```
-
+COmo paso siguiente, se debe guardar el nuevo raster en las coordenadas UTM, y se inicia el proceso con SAGA, generando el archivo .sgrd y nuevamente verificamos la proyeccion que sea la correcta
 ```{r}
+writeRaster(MNT_utm, filename = "1_Data_MNT/MNT_UTM.tif", format = "GTiff" , overwrite = TRUE)
+
 #Crear archivo .sgrd
 rsaga.geoprocessor(lib = "io_gdal", 0,
-                   param = list(GRIDS ="MNT_utm_sgrd",
-                                FILES= "MNT_utm.tif",
-                                TRANSFORM= 1),env = envi)
+                   param = list(GRIDS ="1_Data_MNT/MNT_UTM_sgrd.sgrd",
+                                FILES= "1_Data_MNT/MNT_UTM.tif",
+                                TRANSFORM= 1),env = Env)
 
-#Verificar que quedó creado
-MNT_utm_sgrd = raster("MNT_utm_sgrd.sdat")
+# Verificar que quedó creado
+MNT_UTM_sgrd = raster("1_Data_MNT/MNT_UTM_sgrd.sdat")
+
 #Verificar la proyección
-projection(MNT_utm_sgrd)
+projection(MNT_UTM_sgrd)
+
+```
+Corregimos el MNT con el rellenado de vacios por lo que se genera el archivo demsink_fill.sgrd
+```{r}
+rsaga.geoprocessor(lib = "ta_preprocessor", 2,
+                   param = list(DEM ="1_Data_MNT/MNT_UTM_sgrd.sgrd",
+                                DEM_PREPROC= "1_Data_MNT/demsink_fill.sgrd"),
+                   env = Env)
+```
+Seguidamente cargamos la salida de la estación, para este caso de ejemplo se ha cargado la estación SOCSI como punto final de la cuenca, para aplicar el modelo GR4J
+```{r}
+Est_Hidro = readOGR("4_Shp/","Estacion_Socsi")
+Est_Hidro_utm <- spTransform(Est_Hidro, CRS(projection(MNT_utm)))
+class(Est_Hidro_utm)
+proj4string(Est_Hidro_utm)
+coordinates(Est_Hidro_utm)
 ```
 
 ```{r}
-rsaga.geoprocessor(lib = "ta_preprocessor", 2,
-                   param = list(DEM ="MNT_utm_sgrd.sgrd",
-                                DEM_PREPROC= "demsink_fill"),env = envi)
+rsaga.geoprocessor(lib = "ta_hydrology", 4,
+                   param = list(TARGET_PT_X = coordinates(Est_Hidro_utm)[1],
+                                TARGET_PT_Y = coordinates(Est_Hidro_utm)[2],
+                                ELEVATION = "1_Data_MNT/demsink_fill.sgrd",
+                                AREA = "1_Data_MNT/Cuenca_canete.sgrd",
+                                METHOD = 0),
+                   env = Env)
+```
+Finalmente se guarda el archivo Shp. de la cuenca delimitada 
+```{r}
+rsaga.geoprocessor(lib = "shapes_grid", 6,
+                   param = list(GRID = "1_Data_MNT/Cuenca_canete.sgrd",
+                                POLYGONS = "4_Shp/Cuenca_canete_SAGA.shp",
+                                CLASS_ALL = 1,
+                                CLASS_ID = 100,
+                                SPLIT = 0),
+                   env = Env)
 ```
 
+Como paso adicional, se ha generado un mapa con ggplot2, para la visualización y verificación de la cuenca y la salida en este caso el punto de estación hidrológica 
+```{r}
+#Se lee el archivo .shp y se define como variable
+Cuenca_Canete_SAGA = st_read("4_Shp/Cuenca_Canete_SAGA.shp")
+Area <- st_area(Cuenca_Canete_SAGA)
+Area_km2 <- Area / 1000000
 
+# Graficando un mapa para ver la cuenca
+ggplot() +
+  geom_sf(data = Cuenca_Canete_SAGA, fill = NA, color = "black") +
+  geom_sf(data = st_as_sf(Est_Hidro_utm), color = "red", size = 2) +
+  annotation_scale() +
+  xlab("Este") + ylab("Norte") +
+  annotation_north_arrow(location = 'tr') +
+  ggtitle("Cuenca delimitada con estación hidrológica")
 
+```
 
+# 3. MODELAMIENTO HIDROLÓGICO GR4J
+El procedimiento de modelización hidrológica parte de la delimitación de la cuenca ya que la variable area es fundamental, y seguidamente cargamos los datos de caudales diarios recopilados del ANA (Autoridad Nacional del Agua)
+```{r}
+# Ingreso de caudales diarios observados
+Caudales_Socsi <- read_excel("2_Caudales/Caudales_Socsi.xlsx",
+                             skip = 13)
+View(Caudales_Socsi)
 
+Caudales <- data.frame(Dates = as.Date(Caudales_Socsi$FECHA,
+                                       format = "%d/%m/%Y"), 
+                       Q = Caudales_Socsi$`VALOR (m³/s)`)
 
+# graficando la serie de caudales
 
+plot(Caudales,
+     col = "blue",
+     type = "l", 
+     xlab = "Fecha",
+     ylab = "Caudales [m3/s]", 
+     main = "Serie de caudales diarios")
+```
+Ahora procedemos a extraer la información climática de las bases PISCO de precipitaciones y temperaturas (máximas y mínimas), para ello direccionamos donde se encuentren los archivos Netcdf y en base a la cuenca obtenemos la informacion promedio areal de la cuenca
+```{r}
+Cuenca <- readOGR(dsn = "4_Shp/", layer = "Cuenca_canete_SAGA")
+Cuenca <- spTransform(Cuenca, CRS("+proj=longlat +datum=WGS84 +no_defs "))
+
+# Ingreso de datos de precipitación y temperatura
+PISCO_PR <- raster::brick("D:/DATOS/PISCO_DATA/PISCOpd_v2.1.nc") #Precipitaciones
+PISCO_TX <- raster::brick("D:/DATOS/PISCO_DATA/TEMP_MAX/PISCOdtx_v1.1.nc") #Temperatura Maxima
+PISCO_TN <- raster::brick("D:/DATOS/PISCO_DATA/TEMP_MIN/PISCOdtn_v1.1.nc") #Temperatura minima
+
+# Extrayendo la informacion
+Serie_Pr <- c(rowMeans(t(raster::extract(PISCO_PR, Cuenca, fun = mean, small = TRUE))))
+Serie_Tx <- c(rowMeans(t(raster::extract(PISCO_TX, Cuenca, fun = mean, small = TRUE))))
+Serie_Tn <- c(rowMeans(t(raster::extract(PISCO_TN, Cuenca, fun = mean, small = TRUE))))
+
+# Vector fecha
+Dates <- seq.Date(from = as.Date('1981-01-01'),
+                  to = as.Date('2016-12-31'),
+                  by = 'day')
+
+# Calculo de la Evapotranspiración por Hargreaves 
+Pet <- SPEI::hargreaves(Tmin = Serie_Tn, Tmax = Serie_Tx, 
+                        lat = -12, na.rm = T) / 100
+
+plot(Pet, type = "l")
+```
+
+```{r}
+
+Datos_cuenca <- data.frame(Dates = Dates, 
+                           Pr = Serie_Pr,
+                           PET = Pet)
+head(Datos_cuenca)
+
+# DEFINIR EL PERIODO DE MODELACIÓN
+Date.ini <- as.Date("2005-01-01")
+Date.fin <- as.Date("2012-12-31")
+
+Datos_cuenca2 <- Datos_cuenca %>% 
+  dplyr::filter(Datos_cuenca$Dates <= Date.fin &
+  Datos_cuenca$Dates >= Date.ini)
+length(Datos_cuenca2$PET)
+
+# LLevando los caudales de m3 a mm
+Caudales2 <- Caudales %>% 
+  dplyr::filter(Caudales$Dates <= Date.fin & Caudales$Dates >= Date.ini) %>% 
+  arrange(Dates)
+
+length(Caudales2$Q)
+
+Qobs_mm <- Caudales2$Q*86400 / ((Area_km2*1000))
+Qobs_mm2 <- zoo(x = Qobs_mm, order.by = Caudales2$Dates)
+plot(Qobs_mm2)
+```
+
+```{r}
+# Datos de la cuenca recopilados o generados
+BasinObs <- data.frame(Date = as.POSIXlt(index(Qobs_mm2), 
+                                         format = '%Y-%m-%d'), 
+                       Datos_cuenca2,
+                       Qobs_mm = as.numeric(Qobs_mm2))
+# Ingresos del modelo
+help(RunModel_GR4J)
+
+InputsModel <- CreateInputsModel(FUN_MOD = RunModel_GR4J, 
+                                 DatesR = BasinObs$Date, 
+                                 Precip = BasinObs$Pr,
+                                 PotEvap = BasinObs$PET)
+
+# Se recomienda dos años de calentamiento
+
+Ind_Wup <- seq(which(format(BasinObs$Date, format = "%Y-%m-%d") == "2005-01-01"),
+               which(format(BasinObs$Date, format = "%Y-%m-%d") == "2006-12-31"))
+
+Ind_Run <- seq(which(format(BasinObs$Date, format = "%Y-%m-%d") == "2007-01-01"),
+               which(format(BasinObs$Date, format = "%Y-%m-%d") == "2012-12-31"))
+```
+
+```{r}
+# Simulacion Base sin ajustar parametros
+RunOptions <- CreateRunOptions(FUN_MOD = RunModel_GR4J,
+                               InputsModel = InputsModel,
+                               IndPeriod_WarmUp = Ind_Wup, 
+                               IndPeriod_Run = Ind_Run)
+
+Param <- c(X1 = 169.017, X2 = -2.376, X3 = 20.697, X4 = 1.417) # Parametros aleatorios
+
+OutputsModel <- RunModel_GR4J(InputsModel = InputsModel, 
+                              RunOptions = RunOptions,
+                              Param = Param)
+
+plot(OutputsModel, Qobs = BasinObs$Qobs_mm[Ind_Run])
+```
 

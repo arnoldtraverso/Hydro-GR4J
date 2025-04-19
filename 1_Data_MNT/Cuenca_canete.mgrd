@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAGA_METADATA>
+  <DATABASE></DATABASE>
+  <SOURCE></SOURCE>
+  <HISTORY saga-version="9.8.0">
+    <TOOL library="ta_hydrology" id="4" name="Upslope Area">
+      <OPTION type="grid_system" id="PARAMETERS_GRID_SYSTEM" name="Grid System">
+        <CELLSIZE>87.80000000000001</CELLSIZE>
+        <XMIN>336905.9964933305</XMIN>
+        <YMIN>8532733.269264545</YMIN>
+        <XMAX>449992.39649333048</XMAX>
+        <YMAX>8682256.669264546</YMAX>
+      </OPTION>
+      <OPTION type="double" id="TARGET_PT_X" name="Target X coordinate">370463.32273565198</OPTION>
+      <OPTION type="double" id="TARGET_PT_Y" name="Target Y coordinate">8559311.90342078</OPTION>
+      <OPTION type="choice" id="METHOD" name="Method" index="0">Deterministic 8</OPTION>
+      <OPTION type="boolean" id="MFD_CONTOUR" name="Contour Length">false</OPTION>
+      <INPUT type="grid" id="ELEVATION" name="Elevation" system="PARAMETERS_GRID_SYSTEM">
+        <TOOL library="ta_preprocessor" id="2" name="Sink Removal">
+          <OPTION type="grid_system" id="PARAMETERS_GRID_SYSTEM" name="Grid System">
+            <CELLSIZE>87.80000000000001</CELLSIZE>
+            <XMIN>336905.9964933305</XMIN>
+            <YMIN>8532733.269264545</YMIN>
+            <XMAX>449992.39649333048</XMAX>
+            <YMAX>8682256.669264546</YMAX>
+          </OPTION>
+          <OPTION type="choice" id="METHOD" name="Method" index="1">Fill Sinks</OPTION>
+          <OPTION type="boolean" id="THRESHOLD" name="Threshold">false</OPTION>
+          <OPTION type="double" id="EPSILON" name="Epsilon">0.001</OPTION>
+          <INPUT type="grid" id="DEM" name="DEM" system="PARAMETERS_GRID_SYSTEM">
+            <TOOL library="io_gdal" id="0" name="Import Raster">
+              <OPTION type="file" id="FILES" name="Files">"1_Data_MNT/MNT_UTM.tif"</OPTION>
+              <OPTION type="choice" id="MULTIPLE" name="Multiple Bands Output" index="2">automatic</OPTION>
+              <OPTION type="text" id="SUBSETS" name="Subsets"/>
+              <OPTION type="text" id="SELECTION" name="Select from Multiple Bands"/>
+              <OPTION type="boolean" id="TRANSFORM" name="Transformation">true</OPTION>
+              <OPTION type="choice" id="RESAMPLING" name="Resampling" index="0">Nearest Neighbour</OPTION>
+              <OPTION type="choice" id="EXTENT" name="Extent" index="0">original</OPTION>
+              <OUTPUT type="grid_list" id="GRIDS" name="Grids">MNT_UTM</OUTPUT>
+            </TOOL>
+          </INPUT>
+          <OUTPUT type="grid" id="DEM_PREPROC" name="Preprocessed DEM">MNT_UTM_sgrd [no sinks]</OUTPUT>
+        </TOOL>
+      </INPUT>
+      <OUTPUT type="grid" id="AREA" name="Upslope Area">Upslope Area</OUTPUT>
+    </TOOL>
+  </HISTORY>
+  <FILE></FILE>
+  <DESCRIPTION></DESCRIPTION>
+  <PROJECTION>
+    <WKT2>PROJCRS["WGS 84 / UTM zone 18S",BASEGEODCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]]],CONVERSION["UTM zone 18S",METHOD["Transverse Mercator",ID["EPSG",9807]],PARAMETER["Latitude of natural origin",0,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8801]],PARAMETER["Longitude of natural origin",-75,ANGLEUNIT["degree",0.0174532925199433],ID["EPSG",8802]],PARAMETER["Scale factor at natural origin",0.9996,SCALEUNIT["unity",1],ID["EPSG",8805]],PARAMETER["False easting",500000,LENGTHUNIT["metre",1],ID["EPSG",8806]],PARAMETER["False northing",10000000,LENGTHUNIT["metre",1],ID["EPSG",8807]]],CS[Cartesian,2],AXIS["easting",east,ORDER[1],LENGTHUNIT["metre",1]],AXIS["northing",north,ORDER[2],LENGTHUNIT["metre",1]],ID["EPSG",32718]]</WKT2>
+    <PROJ>+proj=utm +zone=18 +south +datum=WGS84 +units=m +no_defs +type=crs</PROJ>
+    <CODE authority="EPSG">32718</CODE>
+  </PROJECTION>
+</SAGA_METADATA>
