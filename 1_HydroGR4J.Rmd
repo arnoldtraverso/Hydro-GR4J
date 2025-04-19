@@ -1,6 +1,10 @@
 ---
 title: "Hydro-GR4J"
-output: html_notebook
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document: default
 ---
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. 
@@ -131,9 +135,11 @@ ggplot() +
   geom_sf(data = Cuenca_Canete_SAGA, fill = NA, color = "black") +
   geom_sf(data = st_as_sf(Est_Hidro_utm), color = "red", size = 2) +
   annotation_scale() +
-  xlab("Este") + ylab("Norte") +
+  xlab("Longitud") + ylab("Latitud") +
   annotation_north_arrow(location = 'tr') +
   ggtitle("Cuenca delimitada con estación hidrológica")
+
+ggsave(filename = "3_Figuras/Cuenca_delimitada.png", width = 7, height = 10)
 
 ```
 
@@ -143,7 +149,7 @@ El procedimiento de modelización hidrológica parte de la delimitación de la c
 # Ingreso de caudales diarios observados
 Caudales_Socsi <- read_excel("2_Caudales/Caudales_Socsi.xlsx",
                              skip = 13)
-View(Caudales_Socsi)
+# View(Caudales_Socsi)
 
 Caudales <- data.frame(Dates = as.Date(Caudales_Socsi$FECHA,
                                        format = "%d/%m/%Y"), 
@@ -182,11 +188,10 @@ Dates <- seq.Date(from = as.Date('1981-01-01'),
 Pet <- SPEI::hargreaves(Tmin = Serie_Tn, Tmax = Serie_Tx, 
                         lat = -12, na.rm = T) / 100
 
-plot(Pet, type = "l")
+# plot(Pet, type = "l")
 ```
-
+A partir de los datos obtenidos generamos el data frame para incorporarlo al modelo GR4J, este modelo esta con parámetros aleatorios por lo que requiere un ajuste para una correcta simulación hidrológica
 ```{r}
-
 Datos_cuenca <- data.frame(Dates = Dates, 
                            Pr = Serie_Pr,
                            PET = Pet)
@@ -199,14 +204,13 @@ Date.fin <- as.Date("2012-12-31")
 Datos_cuenca2 <- Datos_cuenca %>% 
   dplyr::filter(Datos_cuenca$Dates <= Date.fin &
   Datos_cuenca$Dates >= Date.ini)
-length(Datos_cuenca2$PET)
+# length(Datos_cuenca2$PET)
 
 # LLevando los caudales de m3 a mm
 Caudales2 <- Caudales %>% 
   dplyr::filter(Caudales$Dates <= Date.fin & Caudales$Dates >= Date.ini) %>% 
   arrange(Dates)
-
-length(Caudales2$Q)
+# length(Caudales2$Q)
 
 Qobs_mm <- Caudales2$Q*86400 / ((Area_km2*1000))
 Qobs_mm2 <- zoo(x = Qobs_mm, order.by = Caudales2$Dates)
@@ -220,22 +224,22 @@ BasinObs <- data.frame(Date = as.POSIXlt(index(Qobs_mm2),
                        Datos_cuenca2,
                        Qobs_mm = as.numeric(Qobs_mm2))
 # Ingresos del modelo
-help(RunModel_GR4J)
+help(RunModel_GR4J) # ver ayuda
 
+# Data para el modelo GR4J
 InputsModel <- CreateInputsModel(FUN_MOD = RunModel_GR4J, 
                                  DatesR = BasinObs$Date, 
                                  Precip = BasinObs$Pr,
                                  PotEvap = BasinObs$PET)
 
 # Se recomienda dos años de calentamiento
-
 Ind_Wup <- seq(which(format(BasinObs$Date, format = "%Y-%m-%d") == "2005-01-01"),
                which(format(BasinObs$Date, format = "%Y-%m-%d") == "2006-12-31"))
 
 Ind_Run <- seq(which(format(BasinObs$Date, format = "%Y-%m-%d") == "2007-01-01"),
                which(format(BasinObs$Date, format = "%Y-%m-%d") == "2012-12-31"))
 ```
-
+Ejecutamos la simulación de los periodos definidos anteriormente y realiamos el grafico para evaluar la salida de cuadales diarios
 ```{r}
 # Simulacion Base sin ajustar parametros
 RunOptions <- CreateRunOptions(FUN_MOD = RunModel_GR4J,
