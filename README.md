@@ -39,5 +39,5 @@ IRSTEA - GR4J Model Documentation
 
 ## Licencia
 
-Este proyecto está licenciado bajo la [Licencia MIT](./LICENSE) - libre para uso académico y técnico, con reconocimiento al autor.
-
+Este proyecto está licenciado bajo la [Licencia MIT](./LICENSE).  
+Puedes usarlo, modificarlo y compartirlo libremente para fines académicos, técnicos o de investigación, siempre y cuando se otorgue el reconocimiento correspondiente al autor original.
