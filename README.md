@@ -26,6 +26,12 @@ Su estructura incluye:
 
 ## 📁 Contenido del repositorio
 
+1.  `1_Data_MNT/`: Contiene datos de modelos digitales de elevación (MNT) para análisis topográficos de la cuenca.
+2.  `2_Caudales/`: Incluye series temporales de caudales observados.
+3.  `3_Figuras/`: Almacena visualizaciones generadas durante el análisis.
+4.  `4_Shp/`: Contiene archivos shapefile con información geoespacial de la cuenca.
+5.  `1_HydroGR4J.Rmd`: Documento R Markdown que implementa el modelo GR4J, incluyendo código, análisis y visualizaciones.
+
 ## 📚 Referencias
 
 Perrin, C., Michel, C., & Andréassian, V. (2003). Improvement of a parsimonious model for streamflow simulation. Journal of Hydrology, 279(1–4), 275–289.
