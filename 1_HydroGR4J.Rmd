@@ -265,11 +265,13 @@ CalibOptions <- CreateCalibOptions(FUN_MOD = RunModel_GR4J,
                                    FUN_CALIB = Calibration_Michel)
 
 # Ingreso de parametros
-InputsCrit <- CreateInputsCrit(FUN_CRIT = ErrorCrit_KGE, 
+InputsCrit <- CreateInputsCrit(FUN_CRIT = ErrorCrit_KGE2, 
                                InputsModel = InputsModel,
                                RunOptions = RunOptions,
                                Obs = BasinObs$Qobs_mm[Ind_Run])
 ```
+
+Se establece el ingreso para encontrar la calibación en el modelo hidrológico
 
 ```{r}
 # Encontrando los parametros calibrados
@@ -282,7 +284,7 @@ OutputsCalib <- Calibration(InputsModel = InputsModel,
 
 # Encontrado los parametros calibrados 
 Param_C <- OutputsCalib$ParamFinalR
-Param_C
+print(Param_C) # Ver los valores de los parámetros calibrados
 ```
 
 ```{r}
@@ -292,6 +294,13 @@ OutputsModel2 <- RunModel(InputsModel = InputsModel,
                          Param = Param_C, 
                          FUN = RunModel_GR4J)
 plot(OutputsModel2, Qobs = BasinObs$Qobs_mm[Ind_Run])
+```
+
+Visualización solo de caudales simulados
+```{r}
+ggof(sim = OutputsModel2$Qsim, obs = BasinObs$Qobs_mm[Ind_Run], 
+     dates = as.Date(OutputsModel$DatesR),
+     na.rm = T, gofs = c("NSE", "KGE", "PBIAS"))
 ```
 
 ## 3.2 Validación hidrológica
