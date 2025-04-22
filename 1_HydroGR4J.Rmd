@@ -259,4 +259,39 @@ plot(OutputsModel, Qobs = BasinObs$Qobs_mm[Ind_Run])
 ## 3.1 Calibración hidrológica
 Para el proceso de calibración y validación del modelo hidrológico es necesario establecer los periodos de camibración y validación. En este ejemplo nos centramos a calibrar los cuatro primeros años y el resto de información sera empleada en la validación.
 
+```{r}
+# Criterio de calibracion
+CalibOptions <- CreateCalibOptions(FUN_MOD = RunModel_GR4J, 
+                                   FUN_CALIB = Calibration_Michel)
+
+# Ingreso de parametros
+InputsCrit <- CreateInputsCrit(FUN_CRIT = ErrorCrit_KGE, 
+                               InputsModel = InputsModel,
+                               RunOptions = RunOptions,
+                               Obs = BasinObs$Qobs_mm[Ind_Run])
+```
+
+```{r}
+# Encontrando los parametros calibrados
+OutputsCalib <- Calibration(InputsModel = InputsModel, 
+                            RunOptions = RunOptions,
+                            InputsCrit = InputsCrit,
+                            CalibOptions = CalibOptions,
+                            FUN_MOD = RunModel_GR4J,
+                            FUN_CALIB = Calibration_Michel)
+
+# Encontrado los parametros calibrados 
+Param_C <- OutputsCalib$ParamFinalR
+Param_C
+```
+
+```{r}
+# Ejecutando el modelo con los parametros encontrados
+OutputsModel2 <- RunModel(InputsModel = InputsModel, 
+                         RunOptions = RunOptions,
+                         Param = Param_C, 
+                         FUN = RunModel_GR4J)
+plot(OutputsModel2, Qobs = BasinObs$Qobs_mm[Ind_Run])
+```
+
 ## 3.2 Validación hidrológica
